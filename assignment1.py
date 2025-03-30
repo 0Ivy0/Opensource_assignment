@@ -1,65 +1,103 @@
-student = [0] * 5
-name = [0] * 5
-eng = [0] * 5
-c = [0] * 5
-py = [0] * 5
-suum = [0] * 5
-average = [0] * 5
-grade = [0] * 5
-rank = [1] * 5
+students = {}
+subjects = ["영어점수", "C-언어 점수", "파이썬"]
+rank = {}
 
-def scan():
-    for i in range(5):
-        student[i] = input("학번: ")
-        name[i] = input("이름: ")
-        eng[i] = int(input("영어: "))
-        c[i] = int(input("C-언어: "))
-        py[i] = int(input("파이썬: "))
+def get_info():
+    key = input("학생의 학번: ")
+    student = {
+        "이름": input("학생의 이름: ")
+    }
+    for subject in subjects:
+        student[subject] = int(input(f"{subject}: "))
+    return key, student
 
-def cal_score():
-    for i in range(5):
-        suum[i] = eng[i] + c[i] + py[i]
-        average[i] = suum[i] / 3
+def add_student():
+    key, student = get_info()
+    students[key] = student
+    calculate_scores()
 
-def cal_grade():
-    for i in range(5):
-        if (average[i] >= 95):
-            grade[i] = 'A+'
-        elif (average[i] >= 90):
-            grade[i] = 'A0'
-        elif (average[i] >= 85):
-            grade[i] = 'B+'
-        elif (average[i] >= 80):
-            grade[i] = 'B0'
-        elif (average[i] >= 75):
-            grade[i] = 'C+'
-        elif (average[i] >= 70):
-            grade[i] = 'C0'
-        elif (average[i] >= 65):
-            grade[i] = 'D+'
-        elif (average[i] >= 60):
-            grade[i] = 'D'
-        else:
-            grade[i] = 'F'
+def calculate_scores():
+    for key, student in students.items():
+        student["총점"] = sum(student[subject] for subject in subjects)
+        student["평균"] = student["총점"] / len(subjects)
+        student["학점"] = get_grade(student["평균"])
 
-def cal_rank():
-    for i in range(5):
-        for j in range(5):
-            if (suum[i] > suum[j]):
-                rank[i] += 1
+def get_grade(avg):
+    if avg >= 95: return 'A+'
+    elif avg >= 90: return 'A0'
+    elif avg >= 85: return 'B+'
+    elif avg >= 80: return 'B0'
+    elif avg >= 75: return 'C+'
+    elif avg >= 70: return 'C0'
+    elif avg >= 65: return 'D+'
+    elif avg >= 60: return 'D'
+    else: return 'F'
 
-def prin():
-    print('''
-                            성적관리 프로그램         
-=========================================================================
-학번      이름      영어    C-언어  파이썬  총점    평균    학점   등수
-=========================================================================''')
-    for i in range(5):
-        print("{0:<10} {1:<5} {2:<7} {3:<7} {4:<7} {5:<7} {6:<7} {7:<6} {8:<5}".format(student[i], name[i], eng[i], c[i], py[i], suum[i], average[i], grade[i], rank[i]))
-        
+def calculate_ranks():
+    global rank
+    rank.clear()
+    sorted_students = sorted(students.items(), key=lambda x: x[1]["총점"], reverse=True)
+    for r, (key, student) in enumerate(sorted_students, start=1):
+        student["등수"] = r
+        rank[r]=key
 
-scan()
-cal_score()
-cal_grade()
-cal_rank()
-prin()
+def print_students():
+    print("\n성적관리 프로그램")
+    print("=" * 70)
+    print("학번      이름      영어  C-언어  파이썬  총점   평균   학점  등수")
+    print("=" * 70)
+    for i in range(1,len(students)+1):
+        key = rank[i]
+        student = students[key]
+        print(f"{key:<10} {student['이름']:<5} {student['영어점수']:<6} {student['C-언어 점수']:<6} {student['파이썬']:<6} {student['총점']:<6} {student['평균']:<6.2f} {student['학점']:<4} {student.get('등수', ''):<4}")
+
+def remove_student():
+    key = input("삭제할 학생의 학번: ")
+    if key in students:
+        del students[key]
+        calculate_scores()
+        calculate_ranks()
+    else:
+        print("학생을 찾을 수 없습니다.")
+
+def search_student():
+    key = input("검색할 학생의 학번: ")
+    if key in students:
+        student = students[key]
+        print(f"학번: {key}, 이름: {student['이름']}, 총점: {student['총점']}, 평균: {student['평균']:.2f}, 학점: {student['학점']}, 등수: {student.get('등수', '미정')}")
+    else:
+        print("학생을 찾을 수 없습니다.")
+
+def sort_students():
+    calculate_ranks()
+    print_students()
+
+def count_above_80():
+    count = sum(1 for student in students.values() if student["평균"] >= 80)
+    print(f"80점 이상 학생 수: {count}")
+
+while True:
+    print("""
+1. 학생 추가
+2. 학생 삭제
+3. 학생 검색
+4. 정렬 및 등수 계산
+5. 전체 출력
+6. 80점 이상 학생 수 출력
+7. 종료
+    """)
+    choice = int(input("선택: "))
+    if choice == 1:
+        add_student()
+    elif choice == 2:
+        remove_student()
+    elif choice == 3:
+        search_student()
+    elif choice == 4 or choice == 5:
+        sort_students()
+    elif choice == 6:
+        count_above_80()
+    elif choice == 7:
+        break
+    else:
+        print("올바른 번호를 입력하세요.")
