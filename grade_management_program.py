@@ -9,86 +9,93 @@
 #프로그램 설명: 학생의 성적을 입력 받아 총점, 평균, 학점, 등수 등을 계산 및 출력하는 프로그램
 
 ###################
-students = {}
-subjects = ["영어점수", "C-언어 점수", "파이썬"]
-rank = {}
+class Student:
+    subjects = ["영어점수", "C-언어 점수", "파이썬"]
 
-def get_info():
-    key = input("학생의 학번: ")
-    student = {
-        "이름": input("학생의 이름: ")
-    }
-    for subject in subjects:
-        student[subject] = int(input(f"{subject}: "))
-    return key, student
+    def __init__(self, student_id, name, scores):
+        self.student_id = student_id
+        self.name = name
+        self.scores = dict(zip(Student.subjects, scores))
+        self.total = 0
+        self.average = 0.0
+        self.grade = ''
+        self.rank = None
+        self.calculate_scores()
 
-def add_student():
-    key, student = get_info()
-    students[key] = student
-    calculate_scores()
+    def calculate_scores(self):
+        self.total = sum(self.scores[subject] for subject in Student.subjects)
+        self.average = self.total / len(Student.subjects)
+        self.grade = self.get_grade()
 
-def calculate_scores():
-    for key, student in students.items():
-        student["총점"] = sum(student[subject] for subject in subjects)
-        student["평균"] = student["총점"] / len(subjects)
-        student["학점"] = get_grade(student["평균"])
+    def get_grade(self):
+        avg = self.average
+        if avg >= 95: return 'A+'
+        elif avg >= 90: return 'A0'
+        elif avg >= 85: return 'B+'
+        elif avg >= 80: return 'B0'
+        elif avg >= 75: return 'C+'
+        elif avg >= 70: return 'C0'
+        elif avg >= 65: return 'D+'
+        elif avg >= 60: return 'D'
+        else: return 'F'
 
-def get_grade(avg):
-    if avg >= 95: return 'A+'
-    elif avg >= 90: return 'A0'
-    elif avg >= 85: return 'B+'
-    elif avg >= 80: return 'B0'
-    elif avg >= 75: return 'C+'
-    elif avg >= 70: return 'C0'
-    elif avg >= 65: return 'D+'
-    elif avg >= 60: return 'D'
-    else: return 'F'
+    def __str__(self):
+        scores_str = '  '.join(f"{self.scores[s]:<6}" for s in Student.subjects)
+        return f"{self.student_id:<10} {self.name:<5} {scores_str} {self.total:<6} {self.average:<6.2f} {self.grade:<4} {self.rank or ''}"
 
-def calculate_ranks():
-    global rank
-    rank.clear()
-    sorted_students = sorted(students.items(), key=lambda x: x[1]["총점"], reverse=True)
-    for r, (key, student) in enumerate(sorted_students, start=1):
-        student["등수"] = r
-        rank[r]=key
 
-def print_students():
-    print("\n성적관리 프로그램")
-    print("=" * 70)
-    print("학번      이름      영어  C-언어  파이썬  총점   평균   학점  등수")
-    print("=" * 70)
-    for i in range(1,len(students)+1):
-        key = rank[i]
-        student = students[key]
-        print(f"{key:<10} {student['이름']:<5} {student['영어점수']:<6} {student['C-언어 점수']:<6} {student['파이썬']:<6} {student['총점']:<6} {student['평균']:<6.2f} {student['학점']:<4} {student.get('등수', ''):<4}")
+class StudentManager:
+    def __init__(self):
+        self.students = {}
 
-def remove_student():
-    key = input("삭제할 학생의 학번: ")
-    if key in students:
-        del students[key]
-        calculate_scores()
-        calculate_ranks()
-    else:
-        print("학생을 찾을 수 없습니다.")
+    def get_info(self):
+        student_id = input("학생의 학번: ")
+        name = input("학생의 이름: ")
+        scores = [int(input(f"{subject}: ")) for subject in Student.subjects]
+        return Student(student_id, name, scores)
 
-def search_student():
-    key = input("검색할 학생의 학번: ")
-    if key in students:
-        student = students[key]
-        print(f"학번: {key}, 이름: {student['이름']}, 총점: {student['총점']}, 평균: {student['평균']:.2f}, 학점: {student['학점']}, 등수: {student.get('등수', '미정')}")
-    else:
-        print("학생을 찾을 수 없습니다.")
+    def add_student(self):
+        student = self.get_info()
+        self.students[student.student_id] = student
+        self.calculate_ranks()
 
-def sort_students():
-    calculate_ranks()
-    print_students()
+    def remove_student(self):
+        student_id = input("삭제할 학생의 학번: ")
+        if student_id in self.students:
+            del self.students[student_id]
+            self.calculate_ranks()
+        else:
+            print("학생을 찾을 수 없습니다.")
 
-def count_above_80():
-    count = sum(1 for student in students.values() if student["평균"] >= 80)
-    print(f"80점 이상 학생 수: {count}")
+    def search_student(self):
+        student_id = input("검색할 학생의 학번: ")
+        student = self.students.get(student_id)
+        if student:
+            print(f"학번: {student.student_id}, 이름: {student.name}, 총점: {student.total}, 평균: {student.average:.2f}, 학점: {student.grade}, 등수: {student.rank or '미정'}")
+        else:
+            print("학생을 찾을 수 없습니다.")
 
-while True:
-    print("""
+    def calculate_ranks(self):
+        sorted_students = sorted(self.students.values(), key=lambda s: s.total, reverse=True)
+        for rank, student in enumerate(sorted_students, start=1):
+            student.rank = rank
+
+    def print_students(self):
+        self.calculate_ranks()
+        print("\n성적관리 프로그램")
+        print("=" * 70)
+        print("학번      이름      영어  C-언어  파이썬  총점   평균   학점  등수")
+        print("=" * 70)
+        for student in sorted(self.students.values(), key=lambda s: s.rank or 0):
+            print(student)
+
+    def count_above_80(self):
+        count = sum(1 for student in self.students.values() if student.average >= 80)
+        print(f"80점 이상 학생 수: {count}")
+
+    def run(self):
+        while True:
+            print("""
 1. 학생 추가
 2. 학생 삭제
 3. 학생 검색
@@ -96,19 +103,24 @@ while True:
 5. 전체 출력
 6. 80점 이상 학생 수 출력
 7. 종료
-    """)
-    choice = int(input("선택: "))
-    if choice == 1:
-        add_student()
-    elif choice == 2:
-        remove_student()
-    elif choice == 3:
-        search_student()
-    elif choice == 4 or choice == 5:
-        sort_students()
-    elif choice == 6:
-        count_above_80()
-    elif choice == 7:
-        break
-    else:
-        print("올바른 번호를 입력하세요.")
+            """)
+            choice = int(input("선택: "))
+            if choice == 1:
+                self.add_student()
+            elif choice == 2:
+                self.remove_student()
+            elif choice == 3:
+                self.search_student()
+            elif choice == 4 or choice == 5:
+                self.print_students()
+            elif choice == 6:
+                self.count_above_80()
+            elif choice == 7:
+                break
+            else:
+                print("올바른 번호를 입력하세요.")
+
+
+if __name__ == "__main__":
+    manager = StudentManager()
+    manager.run()
